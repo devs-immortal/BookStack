@@ -13,12 +13,12 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Shelves
     Route::get('/create-shelf', 'BookshelfController@create');
-    Route::group(['prefix' => 'shelves'], function() {
+    Route::group(['prefix' => 'shelves'], function () {
         Route::get('/', 'BookshelfController@index');
         Route::post('/', 'BookshelfController@store');
         Route::get('/{slug}/edit', 'BookshelfController@edit');
         Route::get('/{slug}/delete', 'BookshelfController@showDelete');
-        Route::get('/{slug}', 'BookshelfController@show');
+        Route::get('/{slug}', 'BookshelfController@show')->name('shelves');
         Route::put('/{slug}', 'BookshelfController@update');
         Route::delete('/{slug}', 'BookshelfController@destroy');
         Route::get('/{slug}/permissions', 'BookshelfController@showPermissions');
@@ -39,7 +39,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::put('/{slug}', 'BookController@update');
         Route::delete('/{id}', 'BookController@destroy');
         Route::get('/{slug}/sort-item', 'BookSortController@showItem');
-        Route::get('/{slug}', 'BookController@show');
+        Route::get('/{slug}', 'BookController@show')->name('books');
         Route::get('/{bookSlug}/permissions', 'BookController@showPermissions');
         Route::put('/{bookSlug}/permissions', 'BookController@permissions');
         Route::get('/{slug}/delete', 'BookController@showDelete');
@@ -54,7 +54,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('/{bookSlug}/create-guest-page', 'PageController@createAsGuest');
         Route::get('/{bookSlug}/draft/{pageId}', 'PageController@editDraft');
         Route::post('/{bookSlug}/draft/{pageId}', 'PageController@store');
-        Route::get('/{bookSlug}/page/{pageSlug}', 'PageController@show');
+        Route::get('/{bookSlug}/page/{pageSlug}', 'PageController@show')->name('pages');
         Route::get('/{bookSlug}/page/{pageSlug}/export/pdf', 'PageExportController@pdf');
         Route::get('/{bookSlug}/page/{pageSlug}/export/html', 'PageExportController@html');
         Route::get('/{bookSlug}/page/{pageSlug}/export/plaintext', 'PageExportController@plainText');
@@ -83,7 +83,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('/{bookSlug}/chapter/{chapterSlug}/create-guest-page', 'PageController@createAsGuest');
         Route::get('/{bookSlug}/create-chapter', 'ChapterController@create');
         Route::post('/{bookSlug}/create-chapter', 'ChapterController@store');
-        Route::get('/{bookSlug}/chapter/{chapterSlug}', 'ChapterController@show');
+        Route::get('/{bookSlug}/chapter/{chapterSlug}', 'ChapterController@show')->name('chapters');
         Route::put('/{bookSlug}/chapter/{chapterSlug}', 'ChapterController@update');
         Route::get('/{bookSlug}/chapter/{chapterSlug}/move', 'ChapterController@showMove');
         Route::put('/{bookSlug}/chapter/{chapterSlug}/move', 'ChapterController@move');
@@ -157,7 +157,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/custom-head-content', 'HomeController@customHeadContent');
 
     // Settings
-    Route::group(['prefix' => 'settings'], function() {
+    Route::group(['prefix' => 'settings'], function () {
         Route::get('/', 'SettingController@index')->name('settings');
         Route::post('/', 'SettingController@update');
 
@@ -209,7 +209,6 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/roles/{id}', 'PermissionController@editRole');
         Route::put('/roles/{id}', 'PermissionController@updateRole');
     });
-
 });
 
 // Social auth routes
@@ -249,5 +248,19 @@ Route::post('/password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail
 // Password reset routes...
 Route::get('/password/reset/{token}', 'Auth\ResetPasswordController@showResetForm');
 Route::post('/password/reset', 'Auth\ResetPasswordController@reset');
+
+// Redirects
+Route::get('/s/{slug}', function ($slug) {
+    return redirect()->route('shelves', ['slug' => $slug]);
+});
+Route::get('/b/{slug}', function ($slug) {
+    return redirect()->route('books', ['slug' => $slug]);
+});
+Route::get('/b/{bookSlug}/p/{pageSlug}', function ($bookSlug, $pageSlug) {
+    return redirect()->route('pages', ['bookSlug' => $bookSlug, 'pageSlug' => $pageSlug]);
+});
+Route::get('/b/{bookSlug}/c/{chapterSlug}', function ($bookSlug, $chapterSlug) {
+    return redirect()->route('chapters', ['bookSlug' => $bookSlug, 'chapterSlug' => $chapterSlug]);
+});
 
 Route::fallback('HomeController@getNotFound');
