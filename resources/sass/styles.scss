@@ -300,3 +300,29 @@ table.table .table-entity-item {
   grid-template-columns: 36px 1fr;
   align-items: center;
 }
+
+infobox {
+  float: right;
+  margin-left: 16px;
+
+  th:nth-child(1) > img:nth-child(1) {
+    height: 128px !important;
+    image-rendering: auto;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+  }
+
+  th:nth-child(1) {
+    font-weight: bold;
+    border-right: 0;
+  }
+
+  tr:nth-child(1) {
+    border: 1px solid #ddd;
+  }
+
+  th:nth-child(2) {
+    text-align: left;
+    border-left: 0;
+  }
+}
