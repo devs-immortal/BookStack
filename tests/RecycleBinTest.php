@@ -1,8 +1,8 @@
 <?php namespace Tests;
 
-use BookStack\Entities\Book;
-use BookStack\Entities\Deletion;
-use BookStack\Entities\Page;
+use BookStack\Entities\Models\Book;
+use BookStack\Entities\Models\Deletion;
+use BookStack\Entities\Models\Page;
 use DB;
 use Illuminate\Support\Carbon;
 
@@ -136,7 +136,7 @@ class RecycleBinTest extends TestCase
         $deletion = $page->deletions()->firstOrFail();
 
         $this->assertDatabaseHas('activities', [
-            'key' => 'page_delete',
+            'type' => 'page_delete',
             'entity_id' => $page->id,
             'entity_type' => $page->getMorphClass(),
         ]);
@@ -144,16 +144,16 @@ class RecycleBinTest extends TestCase
         $this->asAdmin()->delete("/settings/recycle-bin/{$deletion->id}");
 
         $this->assertDatabaseMissing('activities', [
-            'key' => 'page_delete',
+            'type' => 'page_delete',
             'entity_id' => $page->id,
             'entity_type' => $page->getMorphClass(),
         ]);
 
         $this->assertDatabaseHas('activities', [
-            'key' => 'page_delete',
-            'entity_id' => 0,
-            'entity_type' => '',
-            'extra' => $page->name,
+            'type' => 'page_delete',
+            'entity_id' => null,
+            'entity_type' => null,
+            'detail' => $page->name,
         ]);
     }
 

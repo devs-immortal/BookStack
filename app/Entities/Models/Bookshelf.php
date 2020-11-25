@@ -1,4 +1,4 @@
-<?php namespace BookStack\Entities;
+<?php namespace BookStack\Entities\Models;
 
 use BookStack\Uploads\Image;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,15 +36,10 @@ class Bookshelf extends Entity implements HasCoverImage
 
     /**
      * Get the url for this bookshelf.
-     * @param string|bool $path
-     * @return string
      */
-    public function getUrl($path = false)
+    public function getUrl(string $path = ''): string
     {
-        if ($path !== false) {
-            return url('/shelves/' . urlencode($this->slug) . '/' . trim($path, '/'));
-        }
-        return url('/shelves/' . urlencode($this->slug));
+        return url('/shelves/' . implode('/', [urlencode($this->slug), trim($path, '/')]));
     }
 
     /**
@@ -83,17 +78,6 @@ class Bookshelf extends Entity implements HasCoverImage
     public function coverImageTypeKey(): string
     {
         return 'cover_shelf';
-    }
-
-    /**
-     * Get an excerpt of this book's description to the specified length or less.
-     * @param int $length
-     * @return string
-     */
-    public function getExcerpt(int $length = 100)
-    {
-        $description = $this->description;
-        return mb_strlen($description) > $length ? mb_substr($description, 0, $length-3) . '...' : $description;
     }
 
     /**

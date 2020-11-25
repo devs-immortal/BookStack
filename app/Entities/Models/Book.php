@@ -1,4 +1,4 @@
-<?php namespace BookStack\Entities;
+<?php namespace BookStack\Entities\Models;
 
 use BookStack\Uploads\Image;
 use Exception;
@@ -12,7 +12,6 @@ use Illuminate\Support\Collection;
  * @property string $description
  * @property int $image_id
  * @property Image|null $cover
- * @package BookStack\Entities
  */
 class Book extends Entity implements HasCoverImage
 {
@@ -23,15 +22,10 @@ class Book extends Entity implements HasCoverImage
 
     /**
      * Get the url for this book.
-     * @param string|bool $path
-     * @return string
      */
-    public function getUrl($path = false)
+    public function getUrl(string $path = ''): string
     {
-        if ($path !== false) {
-            return url('/books/' . urlencode($this->slug) . '/' . trim($path, '/'));
-        }
-        return url('/books/' . urlencode($this->slug));
+        return url('/books/' . implode('/', [urlencode($this->slug), trim($path, '/')]));
     }
 
     /**
@@ -116,16 +110,5 @@ class Book extends Entity implements HasCoverImage
         $pages = $this->directPages()->visible()->get();
         $chapters = $this->chapters()->visible()->get();
         return $pages->concat($chapters)->sortBy('priority')->sortByDesc('draft');
-    }
-
-    /**
-     * Get an excerpt of this book's description to the specified length or less.
-     * @param int $length
-     * @return string
-     */
-    public function getExcerpt(int $length = 100)
-    {
-        $description = $this->description;
-        return mb_strlen($description) > $length ? mb_substr($description, 0, $length-3) . '...' : $description;
     }
 }

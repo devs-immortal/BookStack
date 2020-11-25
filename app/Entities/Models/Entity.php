@@ -1,4 +1,4 @@
-<?php namespace BookStack\Entities;
+<?php namespace BookStack\Entities\Models;
 
 use BookStack\Actions\Activity;
 use BookStack\Actions\Comment;
@@ -6,6 +6,8 @@ use BookStack\Actions\Tag;
 use BookStack\Actions\View;
 use BookStack\Auth\Permissions\EntityPermission;
 use BookStack\Auth\Permissions\JointPermission;
+use BookStack\Entities\Tools\SearchIndex;
+use BookStack\Entities\Tools\SlugGenerator;
 use BookStack\Facades\Permissions;
 use BookStack\Ownable;
 use Carbon\Carbon;
@@ -32,10 +34,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static Entity|Builder hasPermission(string $permission)
  * @method static Builder withLastView()
  * @method static Builder withViewCount()
- *
- * @package BookStack\Entities
  */
-class Entity extends Ownable
+abstract class Entity extends Ownable
 {
     use SoftDeletes;
 
@@ -52,7 +52,7 @@ class Entity extends Ownable
     /**
      * Get the entities that are visible to the current user.
      */
-    public function scopeVisible(Builder $query)
+    public function scopeVisible(Builder $query): Builder
     {
         return $this->scopeHasPermission($query, 'view');
     }
@@ -94,24 +94,18 @@ class Entity extends Ownable
     /**
      * Compares this entity to another given entity.
      * Matches by comparing class and id.
-     * @param $entity
-     * @return bool
      */
-    public function matches($entity)
+    public function matches(Entity $entity): bool
     {
         return [get_class($this), $this->id] === [get_class($entity), $entity->id];
     }
 
     /**
-     * Checks if an entity matches or contains another given entity.
-     * @param Entity $entity
-     * @return bool
+     * Checks if the current entity matches or contains the given.
      */
-    public function matchesOrContains(Entity $entity)
+    public function matchesOrContains(Entity $entity): bool
     {
-        $matches = [get_class($this), $this->id] === [get_class($entity), $entity->id];
-
-        if ($matches) {
+        if ($this->matches($entity)) {
             return true;
         }
 
@@ -128,9 +122,8 @@ class Entity extends Ownable
 
     /**
      * Gets the activity objects for this entity.
-     * @return MorphMany
      */
-    public function activity()
+    public function activity(): MorphMany
     {
         return $this->morphMany(Activity::class, 'entity')
             ->orderBy('created_at', 'desc');
@@ -139,26 +132,23 @@ class Entity extends Ownable
     /**
      * Get View objects for this entity.
      */
-    public function views()
+    public function views(): MorphMany
     {
         return $this->morphMany(View::class, 'viewable');
     }
 
     /**
      * Get the Tag models that have been user assigned to this entity.
-     * @return MorphMany
      */
-    public function tags()
+    public function tags(): MorphMany
     {
         return $this->morphMany(Tag::class, 'entity')->orderBy('order', 'asc');
     }
 
     /**
      * Get the comments for an entity
-     * @param bool $orderByCreated
-     * @return MorphMany
      */
-    public function comments($orderByCreated = true)
+    public function comments(bool $orderByCreated = true): MorphMany
     {
         $query = $this->morphMany(Comment::class, 'entity');
         return $orderByCreated ? $query->orderBy('created_at', 'asc') : $query;
@@ -166,9 +156,8 @@ class Entity extends Ownable
 
     /**
      * Get the related search terms.
-     * @return MorphMany
      */
-    public function searchTerms()
+    public function searchTerms(): MorphMany
     {
         return $this->morphMany(SearchTerm::class, 'entity');
     }
@@ -176,18 +165,15 @@ class Entity extends Ownable
     /**
      * Get this entities restrictions.
      */
-    public function permissions()
+    public function permissions(): MorphMany
     {
         return $this->morphMany(EntityPermission::class, 'restrictable');
     }
 
     /**
      * Check if this entity has a specific restriction set against it.
-     * @param $role_id
-     * @param $action
-     * @return bool
      */
-    public function hasRestriction($role_id, $action)
+    public function hasRestriction(int $role_id, string $action): bool
     {
         return $this->permissions()->where('role_id', '=', $role_id)
             ->where('action', '=', $action)->count() > 0;
@@ -228,22 +214,6 @@ class Entity extends Ownable
     }
 
     /**
-     * Get an instance of an entity of the given type.
-     * @param $type
-     * @return Entity
-     */
-    public static function getEntityInstance($type)
-    {
-        $types = ['Page', 'Book', 'Chapter', 'Bookshelf'];
-        $className = str_replace([' ', '-', '_'], '', ucwords($type));
-        if (!in_array($className, $types)) {
-            return null;
-        }
-
-        return app('BookStack\\Entities\\' . $className);
-    }
-
-    /**
      * Gets a limited-length version of the entities name.
      */
     public function getShortName(int $length = 25): string
@@ -256,36 +226,30 @@ class Entity extends Ownable
 
     /**
      * Get the body text of this entity.
-     * @return mixed
      */
-    public function getText()
+    public function getText(): string
     {
-        return $this->{$this->textField};
+        return $this->{$this->textField} ?? '';
     }
 
     /**
      * Get an excerpt of this entity's descriptive content to the specified length.
-     * @param int $length
-     * @return mixed
      */
-    public function getExcerpt(int $length = 100)
+    public function getExcerpt(int $length = 100): string
     {
         $text = $this->getText();
+
         if (mb_strlen($text) > $length) {
             $text = mb_substr($text, 0, $length-3) . '...';
         }
+
         return trim($text);
     }
 
     /**
      * Get the url of this entity
-     * @param $path
-     * @return string
      */
-    public function getUrl($path = '/')
-    {
-        return $path;
-    }
+    abstract public function getUrl(string $path = '/'): string;
 
     /**
      * Get the parent entity if existing.
@@ -317,8 +281,7 @@ class Entity extends Ownable
      */
     public function indexForSearch()
     {
-        $searchService = app()->make(SearchService::class);
-        $searchService->indexEntity(clone $this);
+        app(SearchIndex::class)->indexEntity(clone $this);
     }
 
     /**
@@ -326,8 +289,7 @@ class Entity extends Ownable
      */
     public function refreshSlug(): string
     {
-        $generator = new SlugGenerator($this);
-        $this->slug = $generator->generate();
+        $this->slug = (new SlugGenerator)->generate($this);
         return $this->slug;
     }
 }

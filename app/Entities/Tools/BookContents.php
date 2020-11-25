@@ -1,10 +1,10 @@
-<?php namespace BookStack\Entities\Managers;
+<?php namespace BookStack\Entities\Tools;
 
-use BookStack\Entities\Book;
-use BookStack\Entities\BookChild;
-use BookStack\Entities\Chapter;
-use BookStack\Entities\Entity;
-use BookStack\Entities\Page;
+use BookStack\Entities\Models\Book;
+use BookStack\Entities\Models\BookChild;
+use BookStack\Entities\Models\Chapter;
+use BookStack\Entities\Models\Entity;
+use BookStack\Entities\Models\Page;
 use BookStack\Exceptions\SortOperationException;
 use Illuminate\Support\Collection;
 
@@ -18,7 +18,6 @@ class BookContents
 
     /**
      * BookContents constructor.
-     * @param $book
      */
     public function __construct(Book $book)
     {

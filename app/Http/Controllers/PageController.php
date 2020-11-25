@@ -1,10 +1,9 @@
 <?php namespace BookStack\Http\Controllers;
 
-use Activity;
-use BookStack\Entities\Managers\BookContents;
-use BookStack\Entities\Managers\PageContent;
-use BookStack\Entities\Managers\PageEditActivity;
-use BookStack\Entities\Page;
+use BookStack\Entities\Tools\BookContents;
+use BookStack\Entities\Tools\PageContent;
+use BookStack\Entities\Tools\PageEditActivity;
+use BookStack\Entities\Models\Page;
 use BookStack\Entities\Repos\PageRepo;
 use BookStack\Exceptions\NotFoundException;
 use BookStack\Exceptions\NotifyException;
@@ -26,7 +25,6 @@ class PageController extends Controller
     public function __construct(PageRepo $pageRepo)
     {
         $this->pageRepo = $pageRepo;
-        parent::__construct();
     }
 
     /**
@@ -107,7 +105,6 @@ class PageController extends Controller
         $this->checkOwnablePermission('page-create', $draftPage->getParent());
 
         $page = $this->pageRepo->publishDraft($draftPage, $request->all());
-        Activity::add($page, 'page_create', $draftPage->book->id);
 
         return redirect($page->getUrl());
     }
@@ -224,7 +221,6 @@ class PageController extends Controller
         $this->checkOwnablePermission('page-update', $page);
 
         $this->pageRepo->update($page, $request->all());
-        Activity::add($page, 'page_update', $page->book->id);
 
         return redirect($page->getUrl());
     }
@@ -304,11 +300,9 @@ class PageController extends Controller
     {
         $page = $this->pageRepo->getBySlug($bookSlug, $pageSlug);
         $this->checkOwnablePermission('page-delete', $page);
+        $parent = $page->getParent();
 
-        $book = $page->book;
-        $parent = $page->chapter ?? $book;
         $this->pageRepo->destroy($page);
-        Activity::add($page, 'page_delete', $page->book_id);
 
         return redirect($parent->getUrl());
     }
@@ -393,7 +387,6 @@ class PageController extends Controller
             return redirect()->back();
         }
 
-        Activity::add($page, 'page_move', $page->book->id);
         $this->showSuccessNotification(trans('entities.pages_move_success', ['parentName' => $parent->name]));
         return redirect($page->getUrl());
     }
@@ -437,8 +430,6 @@ class PageController extends Controller
             $this->showErrorNotification(trans('errors.selected_book_chapter_not_found'));
             return redirect()->back();
         }
-
-        Activity::add($pageCopy, 'page_create', $pageCopy->book->id);
 
         $this->showSuccessNotification(trans('entities.pages_copy_success'));
         return redirect($pageCopy->getUrl());

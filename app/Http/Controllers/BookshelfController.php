@@ -1,8 +1,8 @@
 <?php namespace BookStack\Http\Controllers;
 
 use Activity;
-use BookStack\Entities\Book;
-use BookStack\Entities\Managers\EntityContext;
+use BookStack\Entities\Models\Book;
+use BookStack\Entities\Tools\ShelfContext;
 use BookStack\Entities\Repos\BookshelfRepo;
 use BookStack\Exceptions\ImageUploadException;
 use BookStack\Exceptions\NotFoundException;
@@ -22,12 +22,11 @@ class BookshelfController extends Controller
     /**
      * BookController constructor.
      */
-    public function __construct(BookshelfRepo $bookshelfRepo, EntityContext $entityContextManager, ImageRepo $imageRepo)
+    public function __construct(BookshelfRepo $bookshelfRepo, ShelfContext $entityContextManager, ImageRepo $imageRepo)
     {
         $this->bookshelfRepo = $bookshelfRepo;
         $this->entityContextManager = $entityContextManager;
         $this->imageRepo = $imageRepo;
-        parent::__construct();
     }
 
     /**
@@ -92,7 +91,6 @@ class BookshelfController extends Controller
         $shelf = $this->bookshelfRepo->create($request->all(), $bookIds);
         $this->bookshelfRepo->updateCoverImage($shelf, $request->file('image', null));
 
-        Activity::add($shelf, 'bookshelf_create');
         return redirect($shelf->getUrl());
     }
 
@@ -156,7 +154,6 @@ class BookshelfController extends Controller
         $shelf = $this->bookshelfRepo->update($shelf, $request->all(), $bookIds);
         $resetCover = $request->has('image_reset');
         $this->bookshelfRepo->updateCoverImage($shelf, $request->file('image', null), $resetCover);
-        Activity::add($shelf, 'bookshelf_update');
 
         return redirect($shelf->getUrl());
     }
@@ -182,7 +179,6 @@ class BookshelfController extends Controller
         $shelf = $this->bookshelfRepo->getBySlug($slug);
         $this->checkOwnablePermission('bookshelf-delete', $shelf);
 
-        Activity::add($shelf, 'bookshelf_delete');
         $this->bookshelfRepo->destroy($shelf);
 
         return redirect('/shelves');

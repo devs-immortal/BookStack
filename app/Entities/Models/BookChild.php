@@ -1,5 +1,8 @@
-<?php namespace BookStack\Entities;
+<?php namespace BookStack\Entities\Models;
 
+use BookStack\Entities\Models\Chapter;
+use BookStack\Entities\Models\Entity;
+use BookStack\Entities\Models\Book;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -10,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property Book $book
  * @method Builder whereSlugs(string $bookSlug, string $childSlug)
  */
-class BookChild extends Entity
+abstract class BookChild extends Entity
 {
 
     /**
@@ -44,9 +47,6 @@ class BookChild extends Entity
         $this->refreshSlug();
         $this->save();
         $this->refresh();
-
-        // Update related activity
-        $this->activity()->update(['book_id' => $newBookId]);
 
         // Update all child pages if a chapter
         if ($this instanceof Chapter) {

@@ -1,7 +1,8 @@
 <?php namespace BookStack\Http\Controllers\Api;
 
-use BookStack\Entities\Book;
-use BookStack\Entities\Chapter;
+use BookStack\Actions\ActivityType;
+use BookStack\Entities\Models\Book;
+use BookStack\Entities\Models\Chapter;
 use BookStack\Entities\Repos\ChapterRepo;
 use BookStack\Facades\Activity;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -58,8 +59,6 @@ class ChapterApiController extends ApiController
         $this->checkOwnablePermission('chapter-create', $book);
 
         $chapter = $this->chapterRepo->create($request->all(), $book);
-        Activity::add($chapter, 'chapter_create', $book->id);
-
         return response()->json($chapter->load(['tags']));
     }
 
@@ -83,8 +82,6 @@ class ChapterApiController extends ApiController
         $this->checkOwnablePermission('chapter-update', $chapter);
 
         $updatedChapter = $this->chapterRepo->update($chapter, $request->all());
-        Activity::add($chapter, 'chapter_update', $chapter->book->id);
-
         return response()->json($updatedChapter->load(['tags']));
     }
 
@@ -97,8 +94,6 @@ class ChapterApiController extends ApiController
         $this->checkOwnablePermission('chapter-delete', $chapter);
 
         $this->chapterRepo->destroy($chapter);
-        Activity::addMessage('chapter_delete', $chapter->name, $chapter->book->id);
-
         return response('', 204);
     }
 }

@@ -1,9 +1,9 @@
 <?php namespace Tests\Uploads;
 
-use BookStack\Entities\Managers\TrashCan;
+use BookStack\Entities\Tools\TrashCan;
 use BookStack\Entities\Repos\PageRepo;
 use BookStack\Uploads\Attachment;
-use BookStack\Entities\Page;
+use BookStack\Entities\Models\Page;
 use BookStack\Auth\Permissions\PermissionService;
 use BookStack\Uploads\AttachmentService;
 use Illuminate\Http\UploadedFile;
